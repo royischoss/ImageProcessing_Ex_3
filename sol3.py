@@ -24,7 +24,13 @@ def build_gaussian_pyramid(im, max_levels, filter_size):
     where each element of the array is a grayscale image and filter_vec which is row vector of shape (1, filter_size)
     used for the pyramid construction.
     """
-
+    pyr = [im]
+    filter_vec = np.empty((1, filter_size))
+    conv_vec1 = np.ones((1, 2))
+    conv_vec2 = np.ones((1, 2))
+    for i in range(filter_size - 2):
+        conv_vec1 = np.convolve(conv_vec1, conv_vec2)
+    filter_vec = (1 / sum(conv_vec1)) * conv_vec1
 
 
 def build_laplacian_pyramid(im, max_levels, filter_size):
@@ -37,13 +43,7 @@ def build_laplacian_pyramid(im, max_levels, filter_size):
     where each element of the array is a grayscale image and filter_vec which is row vector of shape (1, filter_size)
     used for the pyramid construction.
     """
-    pyr = [im]
-    filter_vec = np.empty((1, filter_size))
-    conv_vec1 = np.ones((1, 2))
-    conv_vec2 = np.ones((1, 2))
-    for i in range(filter_size - 2):
-        conv_vec1 = np.convolve(conv_vec1, conv_vec2)
-    filter_vec = (1 / sum(conv_vec1)) * conv_vec1
+
 
 
 
