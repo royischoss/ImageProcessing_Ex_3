@@ -9,10 +9,10 @@ import numpy as np
 import scipy as sp
 import scipy.ndimage as spi
 
-
 # --------------------------- constants ----------------------------------------------
 
 MAX_SEGMENT = 255
+
 
 # -------------------------- functions -----------------------------------------------
 
@@ -70,8 +70,11 @@ def expand(im, im_filter):
     :param im_filter: the filter used for the expand action.
     :return: expanded im.
     """
-
-
+    return_mat = np.zeros((2 * im.shape[0] - 1, 2 * im.shape[1] - 1), np.float64)
+    return_mat[::2, ::2] = im
+    return_mat = spi.filters.convolve(spi.filters.convolve(return_mat, 2 * im_filter, mode='constant', cval=0.0),
+                                      2 * im_filter.T, mode='constant', cval=0.0)
+    return return_mat
 
 
 # from ex1 read image:
