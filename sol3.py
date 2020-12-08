@@ -7,7 +7,9 @@ from imageio import imread
 from skimage.color import rgb2gray
 import numpy as np
 import scipy as sp
+from scipy import signal
 import scipy.ndimage as spi
+import matplotlib.pyplot as plt
 
 # --------------------------- constants ----------------------------------------------
 
@@ -31,18 +33,20 @@ def build_gaussian_pyramid(im, max_levels, filter_size):
     conv_vec1 = np.ones((1, 2))
     conv_vec2 = np.ones((1, 2))
     for i in range(filter_size - 2):
-        conv_vec1 = np.convolve(conv_vec1, conv_vec2)
+        conv_vec1 = signal.convolve(conv_vec1, conv_vec2)
     filter_vec = (1 / np.sum(conv_vec1)) * conv_vec1
     n = im.shape[0]
+    m = im.shape[1]
     new_image = np.copy(im)
-    i = 1
-    while n > 16 or i <= max_levels:
-        filtered_image = spi.filters.convolve(spi.filters.convolve(new_image, filter_vec, mode='constant', cval=0.0),
-                                              filter_vec.T, mode='constant', cval=0.0)
+    i = max_levels - 1
+    while m > 16 and n > 16 and i > 0:
+        filtered_image = spi.filters.convolve(spi.filters.convolve(new_image, filter_vec),
+                                              filter_vec.T)
         new_image = np.copy(filtered_image[::2, ::2])
         pyr.append(new_image)
-        i += 1
-        n /= 4
+        i -= 1
+        n /= 2
+        m /= 2
     return pyr, filter_vec
 
 
@@ -60,7 +64,8 @@ def build_laplacian_pyramid(im, max_levels, filter_size):
     lpyr = []
     for i in range(1, len(gaus_pyr)):
         lpyr.append(gaus_pyr[i - 1] - expand(gaus_pyr[i], gaus_filter))
-    return lpyr, gaus_filter * 2
+    lpyr.append(gaus_pyr[len(gaus_pyr) - 1])
+    return lpyr, gaus_filter
 
 
 def expand(im, im_filter):
@@ -70,11 +75,73 @@ def expand(im, im_filter):
     :param im_filter: the filter used for the expand action.
     :return: expanded im.
     """
-    return_mat = np.zeros((2 * im.shape[0] - 1, 2 * im.shape[1] - 1), np.float64)
+    return_mat = np.zeros((2 * im.shape[0], 2 * im.shape[1]), np.float64)
     return_mat[::2, ::2] = im
-    return_mat = spi.filters.convolve(spi.filters.convolve(return_mat, 2 * im_filter, mode='constant', cval=0.0),
-                                      2 * im_filter.T, mode='constant', cval=0.0)
+    return_mat = spi.filters.convolve(spi.filters.convolve(return_mat, 2 * im_filter),
+                                      2 * im_filter.T)
     return return_mat
+
+
+def laplacian_to_image(lpyr, filter_vec, coeff):
+    """
+    The next function reconstruct an image from a laplacioan pyramid.
+    :param lpyr: - a list of images of the laplacian pyramid.
+    :param filter_vec: the vector we use in expand blur.
+    :param coeff: a list of weights for each level in the pyramid.
+    :return: matrix of the image we construct.
+    """
+    for i in range(len(lpyr)):
+        lpyr[i] *= coeff[i]
+    temp_mat = lpyr[len(lpyr) - 1]
+    for i in range(len(lpyr) - 1, 0, -1):
+        temp_mat = expand(temp_mat, filter_vec) + lpyr[i - 1]
+    image = temp_mat
+    return image
+
+
+def render_pyramid(pyr, levels):
+    """
+    The next function gets a pyramid and return matrix of 'levels' numbers of levels stacked horizontally.
+    :param pyr: either a Gaussian or Laplacian pyramid.
+    :param levels: number of levels to present.
+    :return: an image of the the horizontally stacked levels.
+    """
+    stretch_pyr = []
+    for i in range(len(pyr)):
+        stretch_pyr.append(stretch(pyr[i], 1))
+    rows = pyr[0].shape[0]
+    render_pyr = []
+    for i in range(levels):
+        zeros = np.zeros((rows, pyr[i].shape[1]), np.float64)
+        zeros[:pyr[i].shape[0], :] = stretch_pyr[i]
+        render_pyr.append(zeros)
+    big_image = np.hstack(render_pyr)
+    return big_image
+
+
+def stretch(im, high):
+    """
+    A helper method for stretching the matrix values linearity between [0,1].
+    :param im: the image matrix.
+    :param high: the max value for stretch.
+    :return: a stretched values matrix.
+    """
+    low = im.min()
+    diff = im.max() - low
+    return (im - low) * high / diff
+
+
+def display_pyramid(pyr, levels):
+    """
+    The next function display the render image of the pyramid.
+    :param pyr: either a Gaussian or Laplacian pyramid.
+    :param levels: number of levels included in the image.
+    """
+    image = render_pyramid(pyr, levels)
+    plt.imshow(image, cmap='gray')
+    plt.show()
+
+
 
 
 # from ex1 read image:
