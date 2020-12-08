@@ -142,6 +142,26 @@ def display_pyramid(pyr, levels):
     plt.show()
 
 
+def pyramid_blending(im1, im2, mask,max_levels, filter_size_im, filter_size_mask):
+    """
+
+    :param im1:
+    :param im2:
+    :param mask:
+    :param max_levels:
+    :param filter_size_im:
+    :param filter_size_mask:
+    :return:
+    """
+    new_mask = mask.astyp(np.float64)
+    lap_1,filter_vec = build_laplacian_pyramid(im1, max_levels, filter_size_im)
+    lap_2, filter_vec = build_laplacian_pyramid(im2, max_levels,filter_size_im)
+    gaus_mask, filter_vec_mask = build_gaussian_pyramid(new_mask, max_levels, filter_size_mask)
+    lap_3 = []
+    for i in range(len(lap_1)):
+        ones = np.ones((gaus_mask[i].shape[0], gaus_mask[i].shape[1]), np.float64)
+        lap_3.append(gaus_mask[i] * lap_1[i] + (ones - gaus_mask) * lap_2)
+    return laplacian_to_image(lap_3, filter_vec, [1] * len(lap_3))
 
 
 # from ex1 read image:
