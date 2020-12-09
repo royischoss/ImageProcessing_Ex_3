@@ -32,6 +32,7 @@ def build_gaussian_pyramid(im, max_levels, filter_size):
     pyr = [im]
     conv_vec1 = np.ones((1, 2))
     conv_vec2 = np.ones((1, 2))
+    # TODO : if size of filter == 1 return [1].
     for i in range(filter_size - 2):
         conv_vec1 = signal.convolve(conv_vec1, conv_vec2)
     filter_vec = (1 / np.sum(conv_vec1)) * conv_vec1
@@ -137,6 +138,7 @@ def display_pyramid(pyr, levels):
     :param pyr: either a Gaussian or Laplacian pyramid.
     :param levels: number of levels included in the image.
     """
+    plt.figure()
     image = render_pyramid(pyr, levels)
     plt.imshow(image, cmap='gray')
     plt.show()
@@ -154,14 +156,14 @@ def pyramid_blending(im1, im2, mask,max_levels, filter_size_im, filter_size_mask
     :return:
     """
     new_mask = mask.astyp(np.float64)
-    lap_1,filter_vec = build_laplacian_pyramid(im1, max_levels, filter_size_im)
+    lap_1, filter_vec = build_laplacian_pyramid(im1, max_levels, filter_size_im)
     lap_2, filter_vec = build_laplacian_pyramid(im2, max_levels,filter_size_im)
     gaus_mask, filter_vec_mask = build_gaussian_pyramid(new_mask, max_levels, filter_size_mask)
     lap_3 = []
     for i in range(len(lap_1)):
         ones = np.ones((gaus_mask[i].shape[0], gaus_mask[i].shape[1]), np.float64)
         lap_3.append(gaus_mask[i] * lap_1[i] + (ones - gaus_mask) * lap_2)
-    return laplacian_to_image(lap_3, filter_vec, [1] * len(lap_3))
+    return np.clip(laplacian_to_image(lap_3, filter_vec, [1] * len(lap_3)), 0, 1)
 
 
 # from ex1 read image:
