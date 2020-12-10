@@ -185,6 +185,7 @@ def blending_example1():
     mask_path = realpath("mask1.jpg")
     images, representations = the_big_blend(im1_path, im2_path, mask_path,  10, 5, 5)
     display_images(images, representations)
+    return images[0], images[1], images[2], images[3]
 
 
 def blending_example2():
@@ -196,6 +197,7 @@ def blending_example2():
     mask_path = realpath("mask2.jpg")
     images, representations = the_big_blend(im1_path, im2_path, mask_path, 12, 5, 5)
     display_images(images, representations)
+    return images[0], images[1], images[2], images[3]
 
 
 def realpath(filename):
