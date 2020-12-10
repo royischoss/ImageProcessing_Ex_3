@@ -6,15 +6,23 @@
 from imageio import imread
 from skimage.color import rgb2gray
 import numpy as np
-import scipy as sp
 from scipy import signal
 import scipy.ndimage as spi
 import matplotlib.pyplot as plt
+import os
 
 # --------------------------- constants ----------------------------------------------
 
 MAX_SEGMENT = 255
-
+EVERY_TWO = 2
+ROWS = 0
+COLUMNS = 1
+MIN_WIDE = 16
+MIN_HEIGHT = 16
+END_LEVELS = 0
+FIRST = 0
+MAX_CLIP = 1
+MIN_CLIP = 0
 
 # -------------------------- functions -----------------------------------------------
 
@@ -32,18 +40,20 @@ def build_gaussian_pyramid(im, max_levels, filter_size):
     pyr = [im]
     conv_vec1 = np.ones((1, 2))
     conv_vec2 = np.ones((1, 2))
-    # TODO : if size of filter == 1 return [1].
-    for i in range(filter_size - 2):
-        conv_vec1 = signal.convolve(conv_vec1, conv_vec2)
-    filter_vec = (1 / np.sum(conv_vec1)) * conv_vec1
-    n = im.shape[0]
-    m = im.shape[1]
+    if filter_size == 1:
+        filter_vec = np.ones((1, 1))
+    else:
+        for i in range(filter_size - 2):
+            conv_vec1 = signal.convolve(conv_vec1, conv_vec2)
+        filter_vec = (1 / np.sum(conv_vec1)) * conv_vec1
+    n = im.shape[ROWS]
+    m = im.shape[COLUMNS]
     new_image = np.copy(im)
     i = max_levels - 1
-    while m > 16 and n > 16 and i > 0:
+    while m > MIN_HEIGHT and n > MIN_WIDE and i > END_LEVELS:
         filtered_image = spi.filters.convolve(spi.filters.convolve(new_image, filter_vec),
                                               filter_vec.T)
-        new_image = np.copy(filtered_image[::2, ::2])
+        new_image = np.copy(filtered_image[::EVERY_TWO, ::EVERY_TWO])
         pyr.append(new_image)
         i -= 1
         n /= 2
@@ -76,8 +86,8 @@ def expand(im, im_filter):
     :param im_filter: the filter used for the expand action.
     :return: expanded im.
     """
-    return_mat = np.zeros((2 * im.shape[0], 2 * im.shape[1]), np.float64)
-    return_mat[::2, ::2] = im
+    return_mat = np.zeros((2 * im.shape[ROWS], 2 * im.shape[COLUMNS]), np.float64)
+    return_mat[::EVERY_TWO, ::EVERY_TWO] = im
     return_mat = spi.filters.convolve(spi.filters.convolve(return_mat, 2 * im_filter),
                                       2 * im_filter.T)
     return return_mat
@@ -110,11 +120,11 @@ def render_pyramid(pyr, levels):
     stretch_pyr = []
     for i in range(len(pyr)):
         stretch_pyr.append(stretch(pyr[i], 1))
-    rows = pyr[0].shape[0]
+    rows = pyr[FIRST].shape[ROWS]
     render_pyr = []
     for i in range(levels):
-        zeros = np.zeros((rows, pyr[i].shape[1]), np.float64)
-        zeros[:pyr[i].shape[0], :] = stretch_pyr[i]
+        zeros = np.zeros((rows, pyr[i].shape[COLUMNS]), np.float64)
+        zeros[:pyr[i].shape[ROWS], :] = stretch_pyr[i]
         render_pyr.append(zeros)
     big_image = np.hstack(render_pyr)
     return big_image
@@ -140,19 +150,19 @@ def display_pyramid(pyr, levels):
     """
     plt.figure()
     image = render_pyramid(pyr, levels)
-    plt.imshow(image, cmap='gray')
+    plt.imshow(image, cmap=plt.cm.gray)
     plt.show()
 
 
 def pyramid_blending(im1, im2, mask,max_levels, filter_size_im, filter_size_mask):
     """
-
-    :param im1:
-    :param im2:
-    :param mask:
-    :param max_levels:
-    :param filter_size_im:
-    :param filter_size_mask:
+    The next function creates blending of the two images given using a mask indicates false where im2 will fill im 1.
+    :param im1: image 1 matrix.
+    :param im2: image 2 matrix.
+    :param mask: a boolean matrix.
+    :param max_levels: number of max levels of the pyramid/
+    :param filter_size_im: the filter size for the images.
+    :param filter_size_mask: the filter size for the mask.
     :return:
     """
     new_mask = mask.astyp(np.float64)
@@ -161,9 +171,90 @@ def pyramid_blending(im1, im2, mask,max_levels, filter_size_im, filter_size_mask
     gaus_mask, filter_vec_mask = build_gaussian_pyramid(new_mask, max_levels, filter_size_mask)
     lap_3 = []
     for i in range(len(lap_1)):
-        ones = np.ones((gaus_mask[i].shape[0], gaus_mask[i].shape[1]), np.float64)
+        ones = np.ones((gaus_mask[i].shape[ROWS], gaus_mask[i].shape[COLUMNS]), np.float64)
         lap_3.append(gaus_mask[i] * lap_1[i] + (ones - gaus_mask) * lap_2)
-    return np.clip(laplacian_to_image(lap_3, filter_vec, [1] * len(lap_3)), 0, 1)
+    return np.clip(laplacian_to_image(lap_3, filter_vec, [1] * len(lap_3)), MIN_CLIP, MAX_CLIP)
+
+
+def blending_example1():
+    """
+
+    :return:
+    """
+    im1_path = relpath("")
+    im2_path = relpath("")
+    mask_path = relpath("")
+    images, representations = the_big_blend(im1_path, im2_path, mask_path,  10, 5, 5)
+    display_images(images, representations)
+
+
+def blending_example2():
+    """
+
+    :return:
+    """
+    im1_path = relpath("")
+    im2_path = relpath("")
+    mask_path = relpath("")
+    images, representations = the_big_blend(im1_path, im2_path, mask_path, 10, 5, 5)
+    display_images(images, representations)
+
+
+def relpath(filename):
+    """
+    A function for controlling the raltive path of our files.
+    :param filename: the path of your file.
+    :return: relative path of your file.
+    """
+    return os.path.join(os.path.dirname(__file__), filename)
+
+
+def the_big_blend(im1_path, im2_path, mask_path, max_levels, filter_size_im, filter_size_mask):
+    """
+
+    :param im1_path:
+    :param im2_path:
+    :param mask_path:
+    :param max_levels:
+    :param filter_size_im:
+    :param filter_size_mask:
+    :return:
+    """
+    im1 = read_image(im1_path, 2)
+    im2 = read_image(im2_path, 2)
+    mask_float = read_image(mask_path, 1)
+    mask_bool = np.round(mask_float).astype(np.bool)
+    image = np.empty(im1.shape, np.float64)
+    image[:, :, 0] = pyramid_blending(im1[:, :, 0], im2[:, :, 0], mask_bool, max_levels, filter_size_im,
+                                      filter_size_mask)
+    image[:, :, 1] = pyramid_blending(im1[:, :, 1], im2[:, :, 1], mask_bool, max_levels, filter_size_im,
+                                      filter_size_mask)
+    image[:, :, 2] = pyramid_blending(im1[:, :, 2], im2[:, :, 2], mask_bool, max_levels, filter_size_im,
+                                      filter_size_mask)
+    return [im1, im2, mask_float, image], [2, 2, 1, 2]
+
+
+def display_images(images, representations):
+    """
+    A helper function for displaying image.
+    :param images: list of images to display [Image A, Image B, Mask, blend]
+    :param representations: array of representations for the given images 1 is grayscale image and 2 is RGB.
+    """
+    figure, add = plt.subplot(nrows=2, ncols=2)
+    for i in range(4):
+        if representations[i] == 1:
+            add[i // 2][i % 2].plt.imshow(images[i], cmap=plt.cm.gray)
+        else:
+            add[i // 2][i % 2].plt.imshow(images[i])
+        if i == 0:
+            add[0][0].set_title("Image A")
+        elif i == 1:
+            add[0][1].set_title("Image B")
+        elif i == 2:
+            add[1][0].set_title("Mask")
+        else:
+            add[1][1].set_title("Blend")
+    plt.show()
 
 
 # from ex1 read image:
