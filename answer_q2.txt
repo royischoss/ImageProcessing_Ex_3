@@ -3,4 +3,4 @@ The blur is getting bigger as we choose a bigger size for
 the filter vector. as the filter is bigger the image that we
 create will blur better the sharp passes between the two pictures
 it can have an effect on the colors of parts we didn't 
-put inside the mask.
+put inside the mask. cause the blur is wider.

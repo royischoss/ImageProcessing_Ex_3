@@ -4,3 +4,7 @@ is in the high levels so we get a good passing between
 the photos (not sharp) but similar to getting the filter 
 size bigger we can get a mixture of things we didn't wanted to 
 change color as affect of the blur.
+In addition with every we go higher we can pick the frenquencies
+better meaning the band pass get realy thin and we can get 
+to a situation where each level in the laplacian hold few frenquencies.
+so the control we have on the blend frenquencies is higher.
