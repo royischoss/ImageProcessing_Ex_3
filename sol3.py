@@ -211,14 +211,14 @@ def realpath(filename):
 
 def the_big_blend(im1_path, im2_path, mask_path, max_levels, filter_size_im, filter_size_mask):
     """
-
-    :param im1_path:
-    :param im2_path:
-    :param mask_path:
-    :param max_levels:
-    :param filter_size_im:
-    :param filter_size_mask:
-    :return:
+    A helper method who makes the blend of our examples.
+    :param im1_path: the os path for image A.
+    :param im2_path: the os path for image B.
+    :param mask_path: the os path for mask image.
+    :param max_levels: the max levels of the pyramid.
+    :param filter_size_im: the size of the image filter.
+    :param filter_size_mask: the size of the mask filter.
+    :return: the images and the representations in lists.
     """
     im1 = read_image(im1_path, 2)
     im2 = read_image(im2_path, 2)
