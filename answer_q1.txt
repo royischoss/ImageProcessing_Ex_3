@@ -1,9 +1,6 @@
 Question1 - 
-We want to multiply each level by it coefficient so we could
-control what percentage of the level we want to include.
-for example with the blending we creates a mask and than by 
-creating a gausian pyramid we control the blend.
-we multiply each pyramid with coefficient so we include a bit of 
-color of the picture whch is not in the mask so it will be smoother.
-so the coefficient helps us to control the smooth passing between
-the two picture.
+Because each level of the laplacian pyramid is a band pass filter.
+by mulyplying each level we can control the frenquencies we want
+the picture to have.
+By mulyplying the higher levels by 1 and the low ones by a lower coeeficient
+we allow a particular band to pass that depends on our filter.

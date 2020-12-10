@@ -1,0 +1,6 @@
+Question 3- 
+The more levels of pyramid we have the bigger the blur
+is in the high levels so we get a good passing between 
+the photos (not sharp) but similar to getting the filter 
+size bigger we can get a mixture of things we didn't wanted to 
+change color as affect of the blur.

@@ -154,7 +154,7 @@ def display_pyramid(pyr, levels):
     plt.show()
 
 
-def pyramid_blending(im1, im2, mask,max_levels, filter_size_im, filter_size_mask):
+def pyramid_blending(im1, im2, mask, max_levels, filter_size_im, filter_size_mask):
     """
     The next function creates blending of the two images given using a mask indicates false where im2 will fill im 1.
     :param im1: image 1 matrix.
@@ -165,44 +165,42 @@ def pyramid_blending(im1, im2, mask,max_levels, filter_size_im, filter_size_mask
     :param filter_size_mask: the filter size for the mask.
     :return:
     """
-    new_mask = mask.astyp(np.float64)
+    new_mask = mask.astype(np.float64)
     lap_1, filter_vec = build_laplacian_pyramid(im1, max_levels, filter_size_im)
     lap_2, filter_vec = build_laplacian_pyramid(im2, max_levels,filter_size_im)
     gaus_mask, filter_vec_mask = build_gaussian_pyramid(new_mask, max_levels, filter_size_mask)
     lap_3 = []
     for i in range(len(lap_1)):
         ones = np.ones((gaus_mask[i].shape[ROWS], gaus_mask[i].shape[COLUMNS]), np.float64)
-        lap_3.append(gaus_mask[i] * lap_1[i] + (ones - gaus_mask) * lap_2)
+        lap_3.append(gaus_mask[i] * lap_1[i] + (ones - gaus_mask[i]) * lap_2[i])
     return np.clip(laplacian_to_image(lap_3, filter_vec, [1] * len(lap_3)), MIN_CLIP, MAX_CLIP)
 
 
 def blending_example1():
     """
-
-    :return:
+    A function that display a blend example.
     """
-    im1_path = relpath("")
-    im2_path = relpath("")
-    mask_path = relpath("")
+    im1_path = realpath("tzipi.jpg")
+    im2_path = realpath("dunk.jpg")
+    mask_path = realpath("mask1.jpg")
     images, representations = the_big_blend(im1_path, im2_path, mask_path,  10, 5, 5)
     display_images(images, representations)
 
 
 def blending_example2():
     """
-
-    :return:
+    A function that display a blend example.
     """
-    im1_path = relpath("")
-    im2_path = relpath("")
-    mask_path = relpath("")
-    images, representations = the_big_blend(im1_path, im2_path, mask_path, 10, 5, 5)
+    im1_path = realpath("gambit.jpg")
+    im2_path = realpath("chess.jpg")
+    mask_path = realpath("mask2.jpg")
+    images, representations = the_big_blend(im1_path, im2_path, mask_path, 12, 5, 5)
     display_images(images, representations)
 
 
-def relpath(filename):
+def realpath(filename):
     """
-    A function for controlling the raltive path of our files.
+    A function for controlling the relative path of our files.
     :param filename: the path of your file.
     :return: relative path of your file.
     """
@@ -222,8 +220,8 @@ def the_big_blend(im1_path, im2_path, mask_path, max_levels, filter_size_im, fil
     """
     im1 = read_image(im1_path, 2)
     im2 = read_image(im2_path, 2)
-    mask_float = read_image(mask_path, 1)
-    mask_bool = np.round(mask_float).astype(np.bool)
+    mask_float = np.round(read_image(mask_path, 1))
+    mask_bool = mask_float.astype(np.bool)
     image = np.empty(im1.shape, np.float64)
     image[:, :, 0] = pyramid_blending(im1[:, :, 0], im2[:, :, 0], mask_bool, max_levels, filter_size_im,
                                       filter_size_mask)
@@ -231,7 +229,7 @@ def the_big_blend(im1_path, im2_path, mask_path, max_levels, filter_size_im, fil
                                       filter_size_mask)
     image[:, :, 2] = pyramid_blending(im1[:, :, 2], im2[:, :, 2], mask_bool, max_levels, filter_size_im,
                                       filter_size_mask)
-    return [im1, im2, mask_float, image], [2, 2, 1, 2]
+    return [im1, im2, mask_bool, image], [2, 2, 1, 2]
 
 
 def display_images(images, representations):
@@ -240,12 +238,12 @@ def display_images(images, representations):
     :param images: list of images to display [Image A, Image B, Mask, blend]
     :param representations: array of representations for the given images 1 is grayscale image and 2 is RGB.
     """
-    figure, add = plt.subplot(nrows=2, ncols=2)
+    figure, add = plt.subplots(nrows=2, ncols=2)
     for i in range(4):
         if representations[i] == 1:
-            add[i // 2][i % 2].plt.imshow(images[i], cmap=plt.cm.gray)
+            add[i // 2][i % 2].imshow(images[i], cmap=plt.cm.gray)
         else:
-            add[i // 2][i % 2].plt.imshow(images[i])
+            add[i // 2][i % 2].imshow(images[i])
         if i == 0:
             add[0][0].set_title("Image A")
         elif i == 1:
@@ -272,4 +270,4 @@ def read_image(filename, representation):
     else:
         image_mat = np.array(image.astype(np.float64))
         image_mat /= MAX_SEGMENT
-    return image_mat.astype(np.float64)
+    return image_mat
